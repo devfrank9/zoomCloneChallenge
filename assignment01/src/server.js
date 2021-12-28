@@ -16,5 +16,29 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 // Put all your backend code here.
+function onSocketClose() {
+  console.log("Disconnected from the Browser ❌");
+}
+const sockets = [];
+
+wss.on("connection", (socket) => {
+  socket.push(socket);
+  socket["nickname"] = "Anon";
+  socket.on("close", onSocketClose);
+
+  socket.on("message", (msg) => {
+    const message = JSON.parse(msg);
+    switch (message.type) {
+      case "new_message":
+        sockets.forEach((aSocket) =>
+          aSocket.send(`${socket.nickname} :${message.payload}`)
+        );
+        break;
+      case "nickname":
+        socket["nickname"] = message.payload;
+        break;
+    }
+  });
+});
 
 server.listen(process.env.PORT, handleListen);
